@@ -23,6 +23,11 @@ class InventoryFilter(admin.SimpleListFilter):
     
 @admin.register(models.Products)
 class ProductAdmin(admin.ModelAdmin):
+    prepopulated_fields = {
+        'slug': ['title']
+    }
+    autocomplete_fields = ['collection']
+    actions = ['clear_inventory']
     list_display = ['title', 'price', 'inventory_status', 'collection_title']
     list_editable = ['price']
     list_select_related = ['collection']
@@ -36,6 +41,14 @@ class ProductAdmin(admin.ModelAdmin):
         if product.inventory > 10:
             return 'Ok'
         return 'Low'
+    @admin.action(description='Clear inventory')
+    def clear_inventory(self, request, queryset):
+        updated_count = queryset.update(inventory=0)
+        self.message_user(
+            request,
+            f'{updated_count} products sucessfully updated'
+        )
+
 
 
 @admin.register(models.Customers)
@@ -61,6 +74,7 @@ class CustomerAdmin(admin.ModelAdmin):
 
 @admin.register(models.Order)
 class OrderAdmin(admin.ModelAdmin):
+    autocomplete_fields = ['customer']
     list_display = ['placed_at', 'payment_status', 'customer_name']
     list_select_related = ['customer']
 
@@ -71,6 +85,7 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(models.Collection)
 class CollectionAdmin(admin.ModelAdmin):
     list_display = ['title', 'product_count']
+    search_fields = ['title']
 
     @admin.display(ordering='product_count')
     def product_count(self, collection):
