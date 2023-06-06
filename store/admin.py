@@ -27,8 +27,22 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(models.Customers)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'membership']
+    list_display = ['first_name', 'last_name', 'membership', 'order_count']
     list_editable = ['membership']
+
+    @admin.display(ordering='order_count')
+    def order_count(self, customer):
+        url = (reverse('admin:store_order_changelist')
+               + '?'
+               + urlencode({
+                   'customer_id': customer.id
+               }))
+        return format_html('<a href={}>{}</a>', url, customer.order_count)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        return super().get_queryset(request).annotate(
+            order_count=Count('order')
+        )
 
 
 @admin.register(models.Order)
