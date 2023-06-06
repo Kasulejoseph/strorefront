@@ -1,6 +1,5 @@
 from typing import Any, List, Optional, Tuple
 from django.contrib import admin
-from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db.models.query import QuerySet
 from django.db.models import Count
 from django.http.request import HttpRequest
@@ -24,9 +23,6 @@ class InventoryFilter(admin.SimpleListFilter):
         if self.value() == '<10':
             return queryset.filter(inventory__lt=10)
         
-class TagInline(GenericTabularInline):
-    model = TagItem
-    autocomplete_fields = ['tag']
 
 @admin.register(models.Products)
 class ProductAdmin(admin.ModelAdmin):
@@ -38,7 +34,6 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'price', 'inventory_status', 'collection_title']
     list_editable = ['price']
     list_select_related = ['collection']
-    inlines = [TagInline]
     search_fields = ['title']
     list_filter = ['collection', 'updated_at', InventoryFilter]
 
