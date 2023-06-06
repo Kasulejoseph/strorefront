@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List, Optional, Tuple
 from django.contrib import admin
 from django.db.models.query import QuerySet
 from django.db.models import Count
@@ -8,12 +8,25 @@ from django.utils.http import urlencode
 from django.urls import reverse
 from . import models
 
+class InventoryFilter(admin.SimpleListFilter):
+    title = 'Inventory'
+    parameter_name = 'Inventory'
 
+    def lookups(self, request, model_admin):
+        return [
+            ('<10', 'Low')
+        ]
+    
+    def queryset(self, request: Any, queryset: QuerySet):
+        if self.value() == '<10':
+            return queryset.filter(inventory__lt=10)
+    
 @admin.register(models.Products)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'price', 'inventory_status', 'collection_title']
     list_editable = ['price']
     list_select_related = ['collection']
+    list_filter = ['collection', 'updated_at', InventoryFilter]
 
     def collection_title(self, product):
         return product.collection.title
@@ -29,6 +42,7 @@ class ProductAdmin(admin.ModelAdmin):
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ['first_name', 'last_name', 'membership', 'order_count']
     list_editable = ['membership']
+    search_fields = ['first_name__istartswith', 'last_name__istartswith']
 
     @admin.display(ordering='order_count')
     def order_count(self, customer):
