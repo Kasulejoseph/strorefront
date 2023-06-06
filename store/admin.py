@@ -1,11 +1,14 @@
 from typing import Any, List, Optional, Tuple
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db.models.query import QuerySet
 from django.db.models import Count
 from django.http.request import HttpRequest
 from django.utils.html import format_html
 from django.utils.http import urlencode
 from django.urls import reverse
+
+from tags.models import TagItem
 from . import models
 
 class InventoryFilter(admin.SimpleListFilter):
@@ -20,7 +23,11 @@ class InventoryFilter(admin.SimpleListFilter):
     def queryset(self, request: Any, queryset: QuerySet):
         if self.value() == '<10':
             return queryset.filter(inventory__lt=10)
-    
+        
+class TagInline(GenericTabularInline):
+    model = TagItem
+    autocomplete_fields = ['tag']
+
 @admin.register(models.Products)
 class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {
@@ -31,6 +38,8 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'price', 'inventory_status', 'collection_title']
     list_editable = ['price']
     list_select_related = ['collection']
+    inlines = [TagInline]
+    search_fields = ['title']
     list_filter = ['collection', 'updated_at', InventoryFilter]
 
     def collection_title(self, product):
@@ -72,9 +81,13 @@ class CustomerAdmin(admin.ModelAdmin):
         )
 
 
+class OrderItemInline(admin.TabularInline):
+    autocomplete_fields = ['product']
+    model = models.OrderItem
 @admin.register(models.Order)
 class OrderAdmin(admin.ModelAdmin):
     autocomplete_fields = ['customer']
+    inlines = [OrderItemInline]
     list_display = ['placed_at', 'payment_status', 'customer_name']
     list_select_related = ['customer']
 
